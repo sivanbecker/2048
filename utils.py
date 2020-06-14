@@ -1,11 +1,15 @@
 import random
 import numpy as np
-from collections import deque
+from functools import wraps
 
 class Play2048:
 
     _WINING_NUM = 2048
     _DIMENSION = None
+    _PROBABILITY = [2,2,2,2,2,2,2,2,2,4]
+
+    def __repr__(self):
+        return f'<Play2048 {self._DIMENSION}X{self._DIMENSION} board>'
 
     def __init__(self, dimension):
         print(f"Start playing {dimension}X{dimension} 2048")
@@ -15,7 +19,7 @@ class Play2048:
         self.valid_keys = ['w', 'a', 's', 'd']
         self.win = False
 
-        self.board = np.full([self._DIMENSION, self._DIMENSION], None)
+        self.board = np.full([self._DIMENSION, self._DIMENSION], 0)
         self.random_tile()
         self.random_tile()
 
@@ -43,6 +47,8 @@ class Play2048:
                 self.move_right()
 
             self.print_board()
+            self.verify_valid_moves_exist()
+
         if self.win:
             print("You win")
         else:
@@ -52,44 +58,35 @@ class Play2048:
     def rand_cell():
         return (random.randint(0, self._DIMENSION-1), random.randint(0, self._DIMENSION-1))
 
+    def _decorator(rotate=0):
+        def wrapper(func):
+            @wraps(func)
+            def move(self):
+                if rotate > 0:
+                    self.board = np.rot90(self.board, rotate)
+                self.calc_new_state()
+                self.random_tile()
+                if rotate > 0:
+                    self.board = np.rot90(self.board, 4 - rotate)
+                self.is_winner()
+            return move
+        return wrapper
+
+    @_decorator(1)
     def move_up(self):
-        # TODO
-        # print("moving up")
-        # self.print_board('before rotation')
-        self.board = np.rot90(self.board, 1)
-        # self.print_board('after first rotation')
-        self.calc_new_state()
-        # self.print_board('after calc and before second rotation')
-        self.board = np.rot90(self.board, 3)
-        # self.print_board('after second rotation')
-        self.random_tile()
+        pass
 
-        self.is_winner()
-
+    @_decorator(3)
     def move_down(self):
-        # TODO
-        print("moving down")
-        self.board = np.rot90(self.board, 3)
-        self.calc_new_state()
-        self.random_tile()
-        self.board = np.rot90(self.board, 1)
-        self.is_winner()
+        pass
 
+    @_decorator()
     def move_left(self):
-        # TODO
-        print("moving left")
-        self.calc_new_state()
-        self.random_tile()
-        self.is_winner()
+        pass
 
+    @_decorator(2)
     def move_right(self):
-        # TODO
-        print("moving right")
-        self.board = np.rot90(self.board, 2)
-        self.calc_new_state()
-        self.random_tile()
-        self.board = np.rot90(self.board, 2)
-        self.is_winner()
+        pass
 
 
     def calc_new_state(self):
@@ -104,8 +101,8 @@ class Play2048:
 
     def pop_n(self, lst):
         ''' remove any None values'''
-        while None in lst:
-            lst.remove(None)
+        while 0 in lst:
+            lst.remove(0)
 
         return lst
 
@@ -116,9 +113,9 @@ class Play2048:
             for i in range(len(lst)-1):
                 if lst[i] == lst[i+1]:
                     lst[i] = lst[i]*2
-                    lst[i+1] = None
+                    lst[i+1] = 0
         lst = self.pop_n(lst)
-        lst.extend([None]*(self._DIMENSION-len(lst)))
+        lst.extend([0]*(self._DIMENSION-len(lst)))
         return lst
 
     def calc_single(self, lst):
@@ -133,13 +130,40 @@ class Play2048:
             self.win = True
             self.valid = False
 
-    @staticmethod
-    def random_val():
-        return 2
+
+    def random_val(self):
+        return self._PROBABILITY[random.randint(0, len(self._PROBABILITY)-1)]
 
     def random_tile(self):
-        empty_tiles = np.argwhere(self.board == None)
+        empty_tiles = np.argwhere(self.board == 0)
         if len(empty_tiles) > 0: # no empty tiles left
             tile = empty_tiles[random.randint(0, len(empty_tiles)-1)].tolist()
             self.board[tile[0], tile[1]] = self.random_val()
             self.ws -= 1
+
+
+    def verify_valid_moves_exist(self):
+        _curr_board = self.board.copy()
+
+        self.move_up()
+        if (_curr_board - self.board).any():
+            self.board = _curr_board
+            return
+
+        self.move_down()
+        if (_curr_board - self.board).any():
+            self.board = _curr_board
+            return
+
+        self.move_left()
+        if (_curr_board - self.board).any():
+            self.board = _curr_board
+            return
+
+        self.move_right()
+        if (_curr_board - self.board).any():
+            self.board = _curr_board
+            return
+
+        print("No more valid moves")
+        self.valid = False
