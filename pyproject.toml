@@ -3,8 +3,8 @@ z048 = "z048.app:cli"
 
 [tool.poetry]
 name = "z048"
-version = "0.1.0"
-description = "The game 2048!!"
+version = "0.1.1"
+description = "The game 2048 - CLI version!!"
 authors = ["Sivan Becker <sivanbecker@gmail.com>"]
 
 [tool.poetry.dependencies]
