@@ -1,7 +1,7 @@
 import random
 import click
 
-from utils import Play2048
+from .utils import Play2048
 
 @click.group()
 def cli():
